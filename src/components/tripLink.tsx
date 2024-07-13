@@ -17,7 +17,7 @@ export function TripLink({ data }: Props) {
   function handleLinkOpen() {
     Linking.openURL(data.url)
   }
-
+ 
   return (
     <View className="w-full flex-row items-center gap-4">
       <View className="flex-1">

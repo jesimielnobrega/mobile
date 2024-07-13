@@ -1,5 +1,5 @@
 import { Input } from "@/components/input";
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, Keyboard } from "react-native";
 import {
   MapPin,
   Calendar as CalendarIcon,
@@ -10,14 +10,33 @@ import {
 import { colors } from "@/styles/colors";
 import { Button } from "@/components/button";
 import { useState } from "react";
+import { Modal } from "@/components/modal";
+import { Calendar } from "@/components/calendar";
+import { calendarUtils, DatesSelected } from "@/utils/calendarUtils";
+import { DateData } from "react-native-calendars";
 
 export default function Index() {
   enum StepForm {
     TRIP_DETAILS = 1,
     ADD_EMAIL = 2,
   }
+  enum MODAL {
+    NONE = 0,
+    CALENDAR = 1,
+    GUESTS = 2,
+  }
 
+  const [selectedDate, seSelectedDate] = useState({} as DatesSelected);
+  const [showModal, setShowModal] = useState(MODAL.NONE);
   const [stepForm, setStepForm] = useState(StepForm.TRIP_DETAILS);
+
+  function handleSelectedDate(selectedDay: DateData) {
+    const dates = calendarUtils.orderStartsAtAndEndsAt({
+      startsAt: selectedDate.startsAt,
+      endsAt: selectedDate.endsAt,
+      selectedDay,
+    });
+  }
 
   function handleNextStepForm() {
     if (stepForm === StepForm.TRIP_DETAILS) {
@@ -49,6 +68,11 @@ export default function Index() {
           <Input.Field
             editable={stepForm === StepForm.TRIP_DETAILS}
             placeholder="Quando?"
+            onFocus={() => Keyboard.dismiss()}
+            showSoftInputOnFocus={false}
+            onPressIn={() =>
+              stepForm === StepForm.TRIP_DETAILS && setShowModal(MODAL.CALENDAR)
+            }
           />
         </Input>
 
@@ -85,6 +109,19 @@ export default function Index() {
           termos de uso e plíticas de privacidade
         </Text>
       </Text>
+      <Modal
+        title="Seleccionar datas"
+        subtitle="Seleccione a data de ida e volta da viagem"
+        visible={showModal === MODAL.CALENDAR}
+        onClose={() => setShowModal(MODAL.NONE)}
+      >
+        <View className="gap-4 mt-4">
+          <Calendar />
+          <Button onPress={() => setShowModal(MODAL.NONE)}>
+            <Button.Title>Confirmar</Button.Title>
+          </Button>
+        </View>
+      </Modal>
     </View>
   );
 }
