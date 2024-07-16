@@ -1,11 +1,12 @@
 import { Input } from "@/components/input";
-import { View, Text, Image, Keyboard } from "react-native";
+import { View, Text, Image, Keyboard, Alert } from "react-native";
 import {
   MapPin,
   Calendar as CalendarIcon,
   Settings2,
   UserRoundPlus,
   ArrowRight,
+  AtSign,
 } from "lucide-react-native";
 import { colors } from "@/styles/colors";
 import { Button } from "@/components/button";
@@ -14,6 +15,9 @@ import { Modal } from "@/components/modal";
 import { Calendar } from "@/components/calendar";
 import { calendarUtils, DatesSelected } from "@/utils/calendarUtils";
 import { DateData } from "react-native-calendars";
+import dayjs from "dayjs";
+import { GuestEmail } from "@/components/email";
+import { validateInput } from "@/utils/validateInput";
 
 export default function Index() {
   enum StepForm {
@@ -26,8 +30,11 @@ export default function Index() {
     GUESTS = 2,
   }
 
-  const [selectedDate, seSelectedDate] = useState({} as DatesSelected);
+  const [destination, setDestination] = useState("");
+  const [selectedDate, setSelectedDate] = useState({} as DatesSelected);
   const [showModal, setShowModal] = useState(MODAL.NONE);
+  const [emailToInvite, setEmailToInvite] = useState("");
+  const [emailsToInvite, setEmailsToInvite] = useState<string[]>([]);
   const [stepForm, setStepForm] = useState(StepForm.TRIP_DETAILS);
 
   function handleSelectedDate(selectedDay: DateData) {
@@ -36,12 +43,49 @@ export default function Index() {
       endsAt: selectedDate.endsAt,
       selectedDay,
     });
+    setSelectedDate(dates);
   }
 
   function handleNextStepForm() {
+    if (
+      destination.trim().length === 0 ||
+      !selectedDate.startsAt ||
+      !selectedDate.endsAt
+    ) {
+      return Alert.alert(
+        "Detalhes da viagem",
+        "Preencha todas as informações da viagem para seguir"
+      );
+    }
+    if (destination.trim().length < 4) {
+      return Alert.alert(
+        "Detalhes da viagem",
+        "O destino deve ter no mínimo 4 caracteres"
+      );
+    }
     if (stepForm === StepForm.TRIP_DETAILS) {
       return setStepForm(StepForm.ADD_EMAIL);
     }
+  }
+
+  function handleRemoveEmail(emailToRemove: string) {
+    setEmailsToInvite((prevEmails) =>
+      prevEmails.filter((email) => email !== emailToRemove)
+    );
+  }
+
+  function handleAddEmail() {
+    if (!validateInput.email(emailToInvite)) {
+      return Alert.alert("Convidado", "Email inválido");
+    }
+    const emailAlreadyExists = emailsToInvite.find(
+      (email) => email === emailToInvite
+    );
+    if (emailAlreadyExists) {
+      return Alert.alert("Convidado", "O email já foi adicionado");
+    }
+    setEmailsToInvite((prevEmails) => [...prevEmails, emailToInvite]);
+    setEmailToInvite("");
   }
 
   return (
@@ -59,6 +103,8 @@ export default function Index() {
         <Input>
           <MapPin color={colors.zinc[400]} size={20} />
           <Input.Field
+            value={destination}
+            onChangeText={setDestination}
             editable={stepForm === StepForm.TRIP_DETAILS}
             placeholder="Para onde?"
           />
@@ -73,6 +119,7 @@ export default function Index() {
             onPressIn={() =>
               stepForm === StepForm.TRIP_DETAILS && setShowModal(MODAL.CALENDAR)
             }
+            value={selectedDate.formatDatesInText}
           />
         </Input>
 
@@ -89,7 +136,20 @@ export default function Index() {
             </View>
             <Input>
               <UserRoundPlus color={colors.zinc[400]} size={20} />
-              <Input.Field placeholder="Quem estará na viagem?" />
+              <Input.Field
+                placeholder="Quem estará na viagem?"
+                autoCorrect={false}
+                value={
+                  emailsToInvite.length > 0
+                    ? `${emailsToInvite.length} pessoas(a) convidada(s)`
+                    : ""
+                }
+                onPressIn={() => {
+                  Keyboard.dismiss();
+                  setShowModal(MODAL.GUESTS);
+                }}
+                showSoftInputOnFocus={false}
+              />
             </Input>
           </>
         )}
@@ -116,9 +176,54 @@ export default function Index() {
         onClose={() => setShowModal(MODAL.NONE)}
       >
         <View className="gap-4 mt-4">
-          <Calendar />
+          <Calendar
+            onDayPress={handleSelectedDate}
+            markedDates={selectedDate.dates}
+            minDate={dayjs().toISOString()}
+          />
           <Button onPress={() => setShowModal(MODAL.NONE)}>
             <Button.Title>Confirmar</Button.Title>
+          </Button>
+        </View>
+      </Modal>
+
+      <Modal
+        title="Seelccionar convidados"
+        subtitle="Os convidados irão receber emails para confirmar a participação na viagem"
+        visible={showModal === MODAL.GUESTS}
+        onClose={() => setShowModal(MODAL.NONE)}
+      >
+        <View className="my-2 flex-wrap gap-2 border-b border-zinc-800 py-5 items start">
+          {emailsToInvite.length > 0 ? (
+            emailsToInvite.map((email) => (
+              <GuestEmail
+                key={email}
+                email={email}
+                onRemove={() => handleRemoveEmail(email)}
+              />
+            ))
+          ) : (
+            <Text className="text-zinc-600 text-base font-regular">
+              Nenhum email adicionado
+            </Text>
+          )}
+        </View>
+        <View className="gap-4 mt-4">
+          <Input variant="secondary">
+            <AtSign color={colors.zinc[400]} size={20} />
+            <Input.Field
+              value={emailToInvite}
+              onChangeText={(text) =>
+                setEmailToInvite(text.toLocaleLowerCase())
+              }
+              placeholder="Digite o email do convidado"
+              keyboardType="email-address"
+              returnKeyType="send"
+              onSubmitEditing={handleAddEmail}
+            />
+          </Input>
+          <Button onPress={handleAddEmail}>
+            <Button.Title>Convidar</Button.Title>
           </Button>
         </View>
       </Modal>

@@ -1,5 +1,5 @@
-import "dayjs/locale/pt-br"
-import dayjs from "dayjs"
+import "dayjs/locale/pt";
+import dayjs from "dayjs";
 
-// Para traduzir os nomes de dias e mês para pt-br.
-dayjs.locale("pt-br")
+// Para traduzir os nomes de dias e mês para pt-pt.
+dayjs.locale("pt");

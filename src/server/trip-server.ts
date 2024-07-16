@@ -28,8 +28,10 @@ async function create(tripData: TripCreate) {
     const { data } = await api.post<{
       tripId: string;
     }>("/trips", tripData);
-    return data
-  } catch (error) {}
+    return data;
+  } catch (error) {
+    throw error;
+  }
 }
 
 export const TripServer = {

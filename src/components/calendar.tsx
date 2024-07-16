@@ -2,14 +2,14 @@ import {
   Calendar as RNCalendar,
   CalendarProps,
   LocaleConfig,
-} from "react-native-calendars"
-import { ptBR } from "@/utils/localeCalendarConfig"
+} from "react-native-calendars";
+import { ptPt } from "@/utils/localeCalendarConfig";
 
-LocaleConfig.locales["pt-br"] = ptBR
-LocaleConfig.defaultLocale = "pt-br"
+LocaleConfig.locales["pt-br"] = ptPt;
+LocaleConfig.defaultLocale = "pt-br";
 
-import { colors } from "@/styles/colors"
-import { fontFamily } from "@/styles/fontFamily"
+import { colors } from "@/styles/colors";
+import { fontFamily } from "@/styles/fontFamily";
 
 export function Calendar({ ...rest }: CalendarProps) {
   return (
@@ -27,7 +27,7 @@ export function Calendar({ ...rest }: CalendarProps) {
         textDayFontFamily: fontFamily.regular,
         monthTextColor: colors.zinc[200],
         arrowColor: colors.zinc[400],
-        agendaDayNumColor: colors.zinc[200],
+        agendaDayNumColor: colors.zinc[200],  
         todayTextColor: colors.lime[300],
         textDisabledColor: colors.zinc[500],
         calendarBackground: "transparent",
@@ -35,5 +35,5 @@ export function Calendar({ ...rest }: CalendarProps) {
       }}
       {...rest}
     />
-  )
+  );
 }
