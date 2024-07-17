@@ -10,7 +10,7 @@ import {
 } from "lucide-react-native";
 import { colors } from "@/styles/colors";
 import { Button } from "@/components/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal } from "@/components/modal";
 import { Calendar } from "@/components/calendar";
 import { calendarUtils, DatesSelected } from "@/utils/calendarUtils";
@@ -18,6 +18,10 @@ import { DateData } from "react-native-calendars";
 import dayjs from "dayjs";
 import { GuestEmail } from "@/components/email";
 import { validateInput } from "@/utils/validateInput";
+import { tripStorage } from "@/storage/trip";
+import { router } from "expo-router";
+import { TripServer } from "@/server/trip-server";
+import Loading from "@/components/loading";
 
 export default function Index() {
   enum StepForm {
@@ -30,6 +34,8 @@ export default function Index() {
     GUESTS = 2,
   }
 
+  const [isGettingTrip, setIsGettingTrip] = useState(true);
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [destination, setDestination] = useState("");
   const [selectedDate, setSelectedDate] = useState({} as DatesSelected);
   const [showModal, setShowModal] = useState(MODAL.NONE);
@@ -66,6 +72,17 @@ export default function Index() {
     if (stepForm === StepForm.TRIP_DETAILS) {
       return setStepForm(StepForm.ADD_EMAIL);
     }
+
+    Alert.alert("Nova viagem", "Confirmar viagem?", [
+      {
+        text: "Não",
+        style: "cancel",
+      },
+      {
+        text: "Sim",
+        onPress: createTrip,
+      },
+    ]);
   }
 
   function handleRemoveEmail(emailToRemove: string) {
@@ -86,6 +103,67 @@ export default function Index() {
     }
     setEmailsToInvite((prevEmails) => [...prevEmails, emailToInvite]);
     setEmailToInvite("");
+  }
+
+  async function saveTrip(tripId: string) {
+    try {
+      await tripStorage.save(tripId);
+
+      router.navigate("/trip/" + tripId);
+    } catch (error) {
+      Alert.alert(
+        "Salvar viagem",
+        "Não foi possível salvar o id da viagem no dispositivo"
+      );
+    }
+  }
+
+  async function createTrip() {
+    try {
+      setIsCreatingTrip(true);
+
+      const newTrip = await TripServer.create({
+        destination,
+        starts_at: dayjs(selectedDate.startsAt?.dateString).toString(),
+        ends_at: dayjs(selectedDate.endsAt?.dateString).toString(),
+        emails_to_invite: emailsToInvite,
+        owner_name: "Jesimiel",
+        owner_email: "jesimielnobrega25@gmail.com",
+      });
+
+      Alert.alert("Nova viagem", "Viagem criada com sucesso", [
+        { text: "OK. Continuar", onPress: () => saveTrip(newTrip.tripId) },
+      ]);
+    } catch (error) {
+      console.log(error);
+      setIsCreatingTrip(false);
+    }
+  }
+
+  async function getTrip() {
+    try {
+      const tripId = await tripStorage.get();
+      if (!tripId) {
+        return setIsGettingTrip(false);
+      }
+
+      const trip = await TripServer.getById(tripId);
+
+      if (trip) {
+        return router.navigate("/trip/" + trip.id);
+      }
+    } catch (error) {
+      setIsGettingTrip(false);
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    getTrip();
+  }, []);
+
+  if (isGettingTrip) {
+    return <Loading />;
   }
 
   return (
@@ -153,7 +231,11 @@ export default function Index() {
             </Input>
           </>
         )}
-        <Button onPress={handleNextStepForm} variant="primary">
+        <Button
+          isLoading={isCreatingTrip}
+          onPress={handleNextStepForm}
+          variant="primary"
+        >
           <Button.Title>
             {stepForm === StepForm.TRIP_DETAILS
               ? "Continuar"

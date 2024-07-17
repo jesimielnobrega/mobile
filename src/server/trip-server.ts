@@ -34,7 +34,25 @@ async function create(tripData: TripCreate) {
   }
 }
 
+async function update({
+  destination,
+  starts_at,
+  id,
+  ends_at,
+}: Omit<TripDetails, "is_confirmed" | "owner_email" | "owner_name">) {
+  try {
+    await api.put<TripDetails>(`/trips/${id}`, {
+      destination,
+      starts_at,
+      ends_at,
+    });
+  } catch (error) {
+    throw error;
+  }
+}
+
 export const TripServer = {
   getById,
   create,
+  update,
 };
