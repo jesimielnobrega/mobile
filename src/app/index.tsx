@@ -20,7 +20,7 @@ import { GuestEmail } from "@/components/email";
 import { validateInput } from "@/utils/validateInput";
 import { tripStorage } from "@/storage/trip";
 import { router } from "expo-router";
-import { TripServer } from "@/server/trip-server";
+import { tripServer } from "@/server/trip-server";
 import Loading from "@/components/loading";
 
 export default function Index() {
@@ -122,13 +122,11 @@ export default function Index() {
     try {
       setIsCreatingTrip(true);
 
-      const newTrip = await TripServer.create({
+      const newTrip = await tripServer.create({
         destination,
         starts_at: dayjs(selectedDate.startsAt?.dateString).toString(),
         ends_at: dayjs(selectedDate.endsAt?.dateString).toString(),
         emails_to_invite: emailsToInvite,
-        owner_name: "Jesimiel",
-        owner_email: "jesimielnobrega25@gmail.com",
       });
 
       Alert.alert("Nova viagem", "Viagem criada com sucesso", [
@@ -147,14 +145,15 @@ export default function Index() {
         return setIsGettingTrip(false);
       }
 
-      const trip = await TripServer.getById(tripId);
+      const trip = await tripServer.getById(tripId);
 
       if (trip) {
         return router.navigate("/trip/" + trip.id);
       }
     } catch (error) {
-      setIsGettingTrip(false);
       console.log(error);
+    } finally {
+      setIsGettingTrip(false);
     }
   }
 

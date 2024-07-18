@@ -1,7 +1,7 @@
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import Loading from "@/components/loading";
-import { TripDetails, TripServer } from "@/server/trip-server";
+import { TripDetails, tripServer } from "@/server/trip-server";
 import { colors } from "@/styles/colors";
 import dayjs from "dayjs";
 import { router, useLocalSearchParams } from "expo-router";
@@ -48,7 +48,7 @@ export default function Trip() {
         return router.back();
       }
 
-      const trip = await TripServer.getById(tripId);
+      const trip = await tripServer.getById(tripId);
 
       const maxLenghtDestination = 14;
 
@@ -87,7 +87,7 @@ export default function Trip() {
       }
 
       setIsUpdatingTrip(true);
-      await TripServer.update({
+      await tripServer.update({
         id: tripId,
         destination,
         starts_at: dayjs(selectedDate.startsAt.dateString).toString(),
@@ -97,11 +97,16 @@ export default function Trip() {
       Alert.alert("Atualizar viagem", "Viagem actualizada com sucesso!", [
         {
           text: "OK",
-          onPress: getTripDetails,
+          onPress: () => {
+            setShowModal(MODAL.NONE);
+            getTripDetails();
+          },
         },
       ]);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsUpdatingTrip(false);
     }
   }
 
