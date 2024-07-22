@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import { Calendar } from "@/components/calendar";
 import { activitiesServer } from "@/server/activities-server";
 import { Activity, ActivityProps } from "@/components/activity";
+import Loading from "@/components/loading";
 
 type Props = {
   tripDetails: TripData;
@@ -97,7 +98,6 @@ export function Activities({ tripDetails }: Props) {
       }));
 
       setTripActivities(activitiesToSectionList);
-      console.log(activitiesToSectionList);
     } catch (error) {
       console.log(error);
     } finally {
@@ -119,28 +119,32 @@ export function Activities({ tripDetails }: Props) {
           <Button.Title>Nova actividade</Button.Title>
         </Button>
       </View>
-      <SectionList
-        keyExtractor={(item) => item.id}
-        sections={tripActivities}
-        renderItem={({ item }) => <Activity data={item} />}
-        renderSectionHeader={({ section }) => (
-          <View className="w-full">
-            <Text className="text-zinc-50 text-2xl font-2xl font-semiboldpy-2">
-              Dia {section.title.dayNumber + " "}
-              <Text className="text-zinc-500 text-base font-regular capitalize">
-                {section.title.dayName}
+      {isLoadingActivities ? (
+        <Loading />
+      ) : (
+        <SectionList
+          keyExtractor={(item) => item.id}
+          sections={tripActivities}
+          renderItem={({ item }) => <Activity data={item} />}
+          renderSectionHeader={({ section }) => (
+            <View className="w-full">
+              <Text className="text-zinc-50 text-2xl font-2xl font-semiboldpy-2">
+                Dia {section.title.dayNumber + " "}
+                <Text className="text-zinc-500 text-base font-regular capitalize">
+                  {section.title.dayName}
+                </Text>
               </Text>
-            </Text>
-            {section.data.length === 0 && (
-              <Text className="text-zinc-500 font-regular text-sm mb-8">
-                Nenhuma actividade cadastrada neste dia
-              </Text>
-            )}
-          </View>
-        )}
+              {section.data.length === 0 && (
+                <Text className="text-zinc-500 font-regular text-sm mb-8">
+                  Nenhuma actividade cadastrada neste dia
+                </Text>
+              )}
+            </View>
+          )}
+          contentContainerClassName="gap-3"
+        /> 
+      )} 
 
-        contentContainerClassName="gap-3"
-      />
       <Modal
         title="Cadastrar Actividade"
         subtitle="Todos os convidados podem visualizar as actividades"
